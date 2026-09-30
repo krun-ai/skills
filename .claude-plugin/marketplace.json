@@ -1,0 +1,15 @@
+{
+  "name": "krun-ai",
+  "description": "Agent skills for building with Krun.",
+  "owner": {
+    "name": "Krun",
+    "url": "https://krun.ai"
+  },
+  "plugins": [
+    {
+      "name": "krun",
+      "description": "Design Krun decision workflows: pick primitives, handle uncertainty, batch judgments and find the current API and SDK docs.",
+      "source": "./"
+    }
+  ]
+}
