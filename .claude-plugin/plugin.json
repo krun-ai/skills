@@ -1,0 +1,13 @@
+{
+  "name": "krun",
+  "version": "0.1.0",
+  "description": "Agent skills for building fast semantic decision systems with Krun.",
+  "author": {
+    "name": "Krun",
+    "url": "https://krun.ai"
+  },
+  "homepage": "https://docs.krun.ai",
+  "repository": "https://github.com/krun-ai/skills",
+  "license": "Apache-2.0",
+  "keywords": ["krun", "decisions", "routing", "classification", "agent-skills"]
+}
