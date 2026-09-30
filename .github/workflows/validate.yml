@@ -1,0 +1,68 @@
+name: validate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check manifests, skill frontmatter and relative links
+        shell: python
+        run: |
+          import json, pathlib, re, sys
+
+          errors = []
+          root = pathlib.Path(".")
+
+          for name in ["README.md", "LICENSE", ".claude-plugin/plugin.json", ".claude-plugin/marketplace.json"]:
+              if not (root / name).is_file():
+                  errors.append(f"missing {name}")
+
+          plugin = json.loads((root / ".claude-plugin/plugin.json").read_text())
+          market = json.loads((root / ".claude-plugin/marketplace.json").read_text())
+          for key in ["name", "version", "description"]:
+              if not plugin.get(key):
+                  errors.append(f"plugin.json: missing {key}")
+          if not re.fullmatch(r"\d+\.\d+\.\d+", plugin.get("version", "")):
+              errors.append("plugin.json: version is not semver")
+          if plugin["name"] not in [p.get("name") for p in market.get("plugins", [])]:
+              errors.append("marketplace.json: plugin not listed")
+
+          skills = sorted(root.glob("skills/*/SKILL.md"))
+          if not skills:
+              errors.append("no skills/*/SKILL.md")
+          for path in skills:
+              text = path.read_text()
+              match = re.match(r"^---\n(.*?)\n---\n", text, re.S)
+              if not match:
+                  errors.append(f"{path}: missing frontmatter")
+                  continue
+              front = match.group(1)
+              name = re.search(r"^name:\s*(\S+)\s*$", front, re.M)
+              if not name or name.group(1) != path.parent.name:
+                  errors.append(f"{path}: name must match directory '{path.parent.name}'")
+              elif not re.fullmatch(r"[a-z0-9]+(-[a-z0-9]+)*", name.group(1)) or len(name.group(1)) > 64:
+                  errors.append(f"{path}: invalid name")
+              desc = re.search(r"^description:\s*>?\s*\n?((?:[ \t]+.*\n?)+|.+)", front, re.M)
+              desc_text = " ".join(desc.group(1).split()) if desc else ""
+              if not desc_text or len(desc_text) > 1024:
+                  errors.append(f"{path}: description missing or over 1024 characters")
+
+          for md in list(root.glob("*.md")) + skills:
+              for target in re.findall(r"\]\(([^)#\s]+)(?:#[^)]*)?\)", md.read_text()):
+                  if re.match(r"[a-z]+:", target):
+                      continue
+                  if not (md.parent / target).exists():
+                      errors.append(f"{md}: broken relative link {target}")
+
+          for error in errors:
+              print(f"::error::{error}")
+          print(f"{len(skills)} skill(s) checked, {len(errors)} error(s)")
+          sys.exit(1 if errors else 0)
