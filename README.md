@@ -30,6 +30,9 @@ The CLI asks which agents to install to. Installs are project-local by default; 
 
 Copy `skills/krun/` into your agent's skills directory, for example `.claude/skills/krun/`.
 
+See the [installation guide](https://docs.krun.ai/resources/agent-skill) for updates and how the skill fits with the
+Krun docs MCP server.
+
 ## Use
 
 Ask your agent for the outcome you want, for example:
